@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 import uvicorn
 
-from agent.agent import CodeAgent
+from agent.agent import CodeAgent, CodeAgentResponse
 from utils.config import settings
 
 app = FastAPI(
@@ -17,10 +17,9 @@ agent = CodeAgent(system_prompt=settings.system_prompt)
 
 class ChatRequest(BaseModel):
     message: str
-    context: Optional[List[str]] = None
 
 class ChatResponse(BaseModel):
-    response: str
+    response: CodeAgentResponse
 
 @app.get("/")
 async def root():
@@ -29,9 +28,8 @@ async def root():
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     try:
-        response = agent.process_message(
-            message=request.message,
-            context=request.context
+        response = await agent.process_message(
+            message=request.message
         )
         return ChatResponse(
             response=response,

@@ -1,5 +1,9 @@
 06/04
 1. code for allowed imports and forbidden imports
-2. LLM apis/opentouter
-3. parse code from LLM response
+2. (06/05 done)LLM apis/opentouter
+3. (06/05 yes in CodeAgentResponse)parse code from LLM response
 4. draft code container (gRPC)
+06/05
+1. add config file for all the apikey, setting. or we can use config.py
+2. when the LLM response is not in correct JSON format, may ask it to regenerate(raise a specific kind of error and then resent to LLM, may consider record such behavior in db in future)
+ 
