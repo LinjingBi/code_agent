@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package code_executor;
+
+service CodeExecutor {
+  rpc ExecuteCode (CodeExecutionRequest) returns (CodeExecutionResponse) {}
+}
+
+message CodeExecutionRequest {
+  string code = 1;
+  map<string, string> environment = 2;  // Optional environment variables
+}
+
+message CodeExecutionResponse {
+  string output = 1;
+  string error = 2;  // Empty if no error
+  int32 exit_code = 3;
+} 
