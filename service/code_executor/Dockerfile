@@ -15,13 +15,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Generate gRPC code
-RUN python -m grpc_tools.protoc -I./service/code_executor/proto \
+RUN python -m grpc_tools.protoc -I./proto \
     --python_out=. \
     --grpc_python_out=. \
-    ./service/code_executor/proto/code_executor.proto
+    ./proto/code_executor.proto
 
 # Expose the gRPC port
 EXPOSE 50051
 
 # Run the server
-CMD ["python", "-m", "service.code_executor.server"] 
+CMD ["python", "-m", "server"]

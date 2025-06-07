@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field, field_validator
 from llm.openrouter import OpenRouter
 from utils.logging import setup_logger
 from utils.chat_formatter import format_chat_history
-from service.code_executor.client import CodeExecutorClient
+from agent.grpc_client import CodeExecutorClient
 import os
 import json
 import ast
@@ -11,6 +11,8 @@ import re
 
 # Set up logger
 logger = setup_logger(__name__)
+
+FINAL_ANSWER_REGEX = r"<SYSTEM>Final answer is (.*?)<SYSTEM>"
 
 class LLMCodeParseError(Exception):
     """Exception raised when LLM response code cannot be parsed or validated."""
@@ -21,6 +23,8 @@ class CodeAgentResponse(BaseModel):
     thought: str = Field(..., description="The agent's reasoning about what to do")
     code: str = Field(..., description="The code to execute")
     observation: Optional[str] = Field(None, description="The output from code execution")
+    final_answer: Optional[str] = Field(None, description="The final answer of the task")
+
 
     @field_validator('thought', 'code')
     @classmethod
@@ -78,14 +82,18 @@ class CodeAgent:
             logger.debug(self.messages)
 
             # Send code to code executor and add result as "Observation"
-            output, error, exit_code = self.code_executor.execute_code(agent_response.code)
+            output, error, exit_code = self.code_executor(agent_response.code)
+            final_answer = self._parse_final_answer_str(output)
+
             if error:
-                observation = f"Error: {error}"
+                agent_response.observation = f"Error: {error}. Exit code: {exit_code}"
+                self.add_message("system", f"Observation: {agent_response.observation}")
+            elif final_answer:
+                agent_response.final_answer = final_answer
+                self.add_message("system", f"Final Answer: {agent_response.final_answer}")
             else:
-                observation = output
-            
-            agent_response.observation = observation
-            self.add_message("system", f"Observation: {observation}")
+                agent_response.observation = output
+                self.add_message("system", f"Observation: {agent_response.observation}")
             
             return agent_response
             
@@ -100,6 +108,10 @@ class CodeAgent:
         await self.llm.close()
         self.code_executor.close()
     
+    def _parse_final_answer_str(self, output: str) -> Optional[str]:
+        match = re.search(FINAL_ANSWER_REGEX, output)
+        return match.group(1) if match else None
+
     def _parse_llm_response(self, response: str) -> CodeAgentResponse:
         # Parse and validate response
         try:

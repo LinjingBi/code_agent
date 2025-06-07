@@ -7,5 +7,9 @@
 1. add config file for all the apikey, setting. or we can use config.py
 2. when the LLM response is not in correct JSON format, may ask it to regenerate(raise a specific kind of error and then resent to LLM, may consider record such behavior in db in future)
 06/06
-1. thoughout test with code executor container
+1. (06/07 done)thoughout test with code executor container
 2. add step by step execution until {final_answer} in code agent
+06/07
+1. add log to gRPC code executor
+2. add rule in codeagent prompt to write code without def function, and final_result only contain result not function call.
+

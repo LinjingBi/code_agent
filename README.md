@@ -114,16 +114,31 @@ Response:
 ```
 <project_root>/
 ├── service/
-│   ├── code_executor/
-│   │   ├── client.py
-│   │   ├── server.py
-│   │   ├── Dockerfile
-│   │   ├── requirements.txt
-│   │   └── proto/
-│   │       └── code_executor.proto
-├── agent/
-│   └── agent.py
-├── main.py
+│   └── code_executor/
+│       ├── client.py
+│       ├── server.py
+│       ├── Dockerfile
+│       ├── requirements.txt
+│       └── proto/
+│           └── code_executor.proto
+├── webapp/
+│   ├── main.py
+│   ├── agent/
+│   │   ├── agent.py
+│   │   ├── grpc_client.py
+│   │   ├── code_executor_pb2.py
+│   │   ├── code_executor_pb2_grpc.py
+│   │   └── __init__.py
+│   ├── utils/
+│   │   ├── chat_formatter.py
+│   │   └── config.py
+│   ├── llm/
+│   │   └── openrouter.py
+│   ├── tool/
+│   │   └── tool.py
+│   ├── pyproject.toml
+│   ├── uv.lock
+│   └── .python-version
 └── requirements.txt
 ```
 

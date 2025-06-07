@@ -8,7 +8,6 @@ service CodeExecutor {
 
 message CodeExecutionRequest {
   string code = 1;
-  map<string, string> environment = 2;  // Optional environment variables
 }
 
 message CodeExecutionResponse {

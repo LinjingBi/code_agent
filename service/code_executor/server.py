@@ -1,17 +1,19 @@
 import grpc
 from concurrent import futures
-import sys
 import io
 import contextlib
 from typing import Dict, Any
 import logging
 
 # Import generated gRPC code
-from service.code_executor.proto import code_executor_pb2
-from service.code_executor.proto import code_executor_pb2_grpc
+import code_executor_pb2
+import code_executor_pb2_grpc
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+def final_answer(answer):
+    print(f"<SYSTEM>Final answer is {answer}<SYSTEM>")
 
 class CodeExecutorServicer(code_executor_pb2_grpc.CodeExecutorServicer):
     def ExecuteCode(self, request, context):
@@ -21,13 +23,13 @@ class CodeExecutorServicer(code_executor_pb2_grpc.CodeExecutorServicer):
             stdout = io.StringIO()
             stderr = io.StringIO()
             
-            # Set up environment variables
-            env = request.environment or {}
-            
             # Execute code with captured output
             with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
                 # Create a new namespace for execution
-                namespace: Dict[str, Any] = {}
+                namespace: Dict[str, Any] = {
+                    "__builtins__": __builtins__,
+                    "final_answer": final_answer,
+                }
                 
                 # Execute the code
                 exec(request.code, namespace)
@@ -47,7 +49,7 @@ class CodeExecutorServicer(code_executor_pb2_grpc.CodeExecutorServicer):
             return code_executor_pb2.CodeExecutionResponse(
                 output="",
                 error=str(e),
-                exit_code=1
+                exit_code= e.code if isinstance(e.code, int) else 1
             )
 
 def serve():
@@ -62,5 +64,5 @@ def serve():
     logger.info(f"Code executor server started on port {port}")
     server.wait_for_termination()
 
-if __name__ == '__main__':
-    serve() 
+if __name__ == "__main__":
+    serve()

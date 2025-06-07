@@ -1,6 +1,6 @@
 import grpc
-from service.code_executor.proto import code_executor_pb2
-from service.code_executor.proto import code_executor_pb2_grpc
+from . import code_executor_pb2
+from . import code_executor_pb2_grpc
 import logging
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ class CodeExecutorClient:
         self.channel = grpc.insecure_channel(f'{host}:{port}')
         self.stub = code_executor_pb2_grpc.CodeExecutorStub(self.channel)
     
-    def __call__(self, code: str, environment: dict = None) -> tuple[str, str, int]:
+    def __call__(self, code: str) -> tuple[str, str, int]:
         """Execute Python code remotely.
         
         Args:
@@ -28,8 +28,7 @@ class CodeExecutorClient:
         """
         try:
             request = code_executor_pb2.CodeExecutionRequest(
-                code=code,
-                environment=environment or {}
+                code=code
             )
             response = self.stub.ExecuteCode(request)
             return response.output, response.error, response.exit_code
@@ -40,4 +39,6 @@ class CodeExecutorClient:
     
     def close(self):
         """Close the gRPC channel."""
-        self.channel.close() 
+        self.channel.close()
+
+
