@@ -2,7 +2,6 @@ from typing import List, Dict, Optional
 from pydantic import BaseModel, Field, field_validator
 from llm.openrouter import OpenRouter
 from utils.logging import setup_logger
-from utils.chat_formatter import format_chat_history
 from agent.grpc_client import CodeExecutorClient
 import os
 import json
@@ -34,8 +33,10 @@ class CodeAgentResponse(BaseModel):
         return v.strip()
 
 class CodeAgent:
-    def __init__(self, system_prompt):
+    def __init__(self, system_prompt, max_iter=5):
         self.system_prompt = system_prompt
+        self.max_iter = max_iter
+        assert max_iter > 0, "Assistant needs at least 1 step to give the final answer!"
         self.messages: List[Dict[str, str]] = []
         self.llm = OpenRouter(api_key=os.getenv("API_KEY"))
         self.code_executor = CodeExecutorClient(
@@ -47,6 +48,23 @@ class CodeAgent:
     def add_message(self, role: str, content: str):
         """Add a message to the conversation history."""
         self.messages.append({"role": role, "content": content})
+        print(f"{role.upper()}:")
+        if "Thought:" in content and "Code:" in content:
+            thought, code = content.split("Code:", 1)
+            thought = thought.replace("Thought:", "").strip()
+            code = code.strip()
+            
+            # Print thought
+            print("Thought:")
+            for line in thought.split('\n'):
+                print(f"  {line}")
+            
+            # Print code
+            print("\nCode:")
+            for line in code.split('\n'):
+                print(f"  {line}")
+        else:
+            print(content)
     
     async def process_message(self, message: str) -> CodeAgentResponse:
         """Process a user message and return the agent's response.
@@ -63,45 +81,51 @@ class CodeAgent:
         # Add user message to history
         self.add_message("user", message)
         logger.info("User message added to history")
+
+        for _ in range(self.max_iter):
+            try:
+                # Get completion from OpenRouter
+                response = await self.llm.chat_completion(
+                    messages=self.messages,
+                    model="deepseek/deepseek-r1-0528-qwen3-8b:free",
+                    temperature=0.7,
+                    top_p=0.95,
+                )
+                logger.info("Received response from LLM")
+                
+                agent_response = self._parse_llm_response(response)
+                # Add assistant's response to history
+                self.add_message("assistant", f"Thought: {agent_response.thought}\nCode: {agent_response.code}")
+                logger.info("Assistant response added to history")
+                # logger.info(format_chat_history(self.messages))
+                # logger.debug(self.messages)
+
+                # Send code to code executor and add result as "Observation"
+                output, error, exit_code = self.code_executor(agent_response.code)
+                final_answer = self._parse_final_answer_str(output)
+
+                if error:
+                    agent_response.observation = f"Error: {error}. Exit code: {exit_code}"
+                    self.add_message("system", f"Observation: {agent_response.observation}")
+                elif final_answer:
+                    agent_response.final_answer = final_answer
+                    self.add_message("system", f"Final Answer: {agent_response.final_answer}")
+                else:
+                    agent_response.observation = output
+                    self.add_message("system", f"Observation: {agent_response.observation}")
+
+                if error or final_answer:
+                    return agent_response
+                
+            except Exception as e:
+                error_msg = f"Error processing message: {str(e)}"
+                logger.error(error_msg, exc_info=True)
+                self.add_message("assistant", f"Error: {error_msg}")
+                raise ValueError(error_msg)
         
-        try:
-            # Get completion from OpenRouter
-            response = await self.llm.chat_completion(
-                messages=self.messages,
-                model="deepseek/deepseek-r1-0528-qwen3-8b:free",
-                temperature=0.7,
-                top_p=0.95,
-            )
-            logger.info("Received response from LLM")
-            
-            agent_response = self._parse_llm_response(response)
-            # Add assistant's response to history
-            self.add_message("assistant", f"Thought: {agent_response.thought}\nCode: {agent_response.code}")
-            logger.info("Assistant response added to history")
-            logger.info(format_chat_history(self.messages))
-            logger.debug(self.messages)
-
-            # Send code to code executor and add result as "Observation"
-            output, error, exit_code = self.code_executor(agent_response.code)
-            final_answer = self._parse_final_answer_str(output)
-
-            if error:
-                agent_response.observation = f"Error: {error}. Exit code: {exit_code}"
-                self.add_message("system", f"Observation: {agent_response.observation}")
-            elif final_answer:
-                agent_response.final_answer = final_answer
-                self.add_message("system", f"Final Answer: {agent_response.final_answer}")
-            else:
-                agent_response.observation = output
-                self.add_message("system", f"Observation: {agent_response.observation}")
-            
-            return agent_response
-            
-        except Exception as e:
-            error_msg = f"Error processing message: {str(e)}"
-            logger.error(error_msg, exc_info=True)
-            self.add_message("assistant", f"Error: {error_msg}")
-            raise ValueError(error_msg)
+        # exceed max iter
+        logger.warning(f'Failed to give final answer within {self.max_iter} steps.\nLast response: {self.messages[-2:]}')
+        return agent_response
     
     async def close(self):
         """Close the LLM client and code executor."""

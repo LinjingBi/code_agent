@@ -4,6 +4,7 @@ import io
 import contextlib
 from typing import Dict, Any
 import logging
+from tool import search
 
 # Import generated gRPC code
 import code_executor_pb2
@@ -34,7 +35,12 @@ class CodeExecutorServicer(code_executor_pb2_grpc.CodeExecutorServicer):
                 namespace: Dict[str, Any] = {
                     "__builtins__": __builtins__,
                     "final_answer": final_answer,
+                    
                 }
+                tool_namespace = {
+                    "search": search,
+                }
+                namespace.update(tool_namespace)
                 
                 # Execute the code
                 exec(request.code, namespace)
@@ -54,7 +60,7 @@ class CodeExecutorServicer(code_executor_pb2_grpc.CodeExecutorServicer):
             return code_executor_pb2.CodeExecutionResponse(
                 output="",
                 error=str(e),
-                exit_code= e.code if isinstance(e.code, int) else 1
+                exit_code=1
             )
 
 def serve():
