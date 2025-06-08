@@ -9,15 +9,20 @@ import logging
 import code_executor_pb2
 import code_executor_pb2_grpc
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 logger = logging.getLogger(__name__)
 
 def final_answer(answer):
     print(f"<SYSTEM>Final answer is {answer}<SYSTEM>")
 
 class CodeExecutorServicer(code_executor_pb2_grpc.CodeExecutorServicer):
-    def ExecuteCode(self, request, context):
+    def ExecuteCode(self, request: code_executor_pb2.CodeExecutionRequest, context):
         """Execute Python code in a safe environment."""
+        logger.info(f"Received code execution request. Code: {request.code[:50]}")
         try:
             # Capture stdout and stderr
             stdout = io.StringIO()

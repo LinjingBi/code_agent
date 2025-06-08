@@ -10,6 +10,6 @@
 1. (06/07 done)thoughout test with code executor container
 2. add step by step execution until {final_answer} in code agent
 06/07
-1. add log to gRPC code executor
+1. (06/08 done)add log to gRPC code executor
 2. add rule in codeagent prompt to write code without def function, and final_result only contain result not function call.
 
