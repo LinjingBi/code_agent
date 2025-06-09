@@ -2,16 +2,36 @@ syntax = "proto3";
 
 package code_executor;
 
-service CodeExecutor {
-  rpc ExecuteCode (CodeExecutionRequest) returns (CodeExecutionResponse) {}
-}
-
 message CodeExecutionRequest {
   string code = 1;
 }
 
 message CodeExecutionResponse {
   string output = 1;
-  string error = 2;  // Empty if no error
+  string error = 2;
   int32 exit_code = 3;
-} 
+}
+
+message GetToolListRequest {
+}
+
+message GetToolListResponse {
+  repeated Tool tools = 1;
+}
+
+message Tool {
+  string name = 1;
+  string description = 2;
+  string output_type = 3;
+  map<string, ToolInput> inputs = 4;
+}
+
+message ToolInput {
+  string type = 1;
+  string description = 2;
+}
+
+service CodeExecutor {
+  rpc ExecuteCode(CodeExecutionRequest) returns (CodeExecutionResponse);
+  rpc GetToolList(GetToolListRequest) returns (GetToolListResponse);
+}

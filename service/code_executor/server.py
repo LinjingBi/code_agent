@@ -4,7 +4,7 @@ import io
 import contextlib
 from typing import Dict, Any
 import logging
-from tool import search
+from tool import tool_registry
 
 # Import generated gRPC code
 import code_executor_pb2
@@ -21,7 +21,42 @@ def final_answer(answer):
     print(f"<SYSTEM>Final answer is {answer}<SYSTEM>")
 
 class CodeExecutorServicer(code_executor_pb2_grpc.CodeExecutorServicer):
-    def ExecuteCode(self, request: code_executor_pb2.CodeExecutionRequest, context):
+    def GetToolList(self, context) -> list(code_executor_pb2.GetToolListResponse):
+        try:
+            # Get tools from registry (returns Python dict)
+            tools_dict = tool_registry.get_tools()
+            
+            # Convert to protobuf messages
+            tool_messages = []
+            for tool_name, tool_info in tools_dict.items():
+                # Convert inputs dict to protobuf format
+                inputs_proto = {}
+                for input_name, input_info in tool_info.get('inputs', {}).items():
+                    inputs_proto[input_name] = code_executor_pb2.ToolInput(
+                        type=input_info.get('type', Any),
+                        description=input_info.get('description', '')
+                    )
+                
+                # Create Tool message
+                tool_message = code_executor_pb2.Tool(
+                    name=tool_info.get('name', tool_name),
+                    description=tool_info.get('description', ''),
+                    output_type=tool_info.get('output_type', Any),
+                    inputs=inputs_proto
+                )
+                tool_messages.append(tool_message)
+            
+            # Return GetToolListResponse
+            return code_executor_pb2.GetToolListResponse(tools=tool_messages)
+            
+        except Exception as e:
+            logger.error(f"Error getting tool list: {str(e)}")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(f"Error getting tool list: {str(e)}")
+            raise
+        
+
+    def ExecuteCode(self, request: code_executor_pb2.CodeExecutionRequest, context) -> code_executor_pb2.CodeExecutionResponse:
         """Execute Python code in a safe environment."""
         logger.info(f"Received code execution request. Code: {request.code[:50]}")
         try:
@@ -37,10 +72,6 @@ class CodeExecutorServicer(code_executor_pb2_grpc.CodeExecutorServicer):
                     "final_answer": final_answer,
                     
                 }
-                tool_namespace = {
-                    "search": search,
-                }
-                namespace.update(tool_namespace)
                 
                 # Execute the code
                 exec(request.code, namespace)
@@ -57,11 +88,9 @@ class CodeExecutorServicer(code_executor_pb2_grpc.CodeExecutorServicer):
             
         except Exception as e:
             logger.error(f"Error executing code: {str(e)}")
-            return code_executor_pb2.CodeExecutionResponse(
-                output="",
-                error=str(e),
-                exit_code=1
-            )
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(str(e))
+            raise
 
 def serve():
     """Start the gRPC server."""

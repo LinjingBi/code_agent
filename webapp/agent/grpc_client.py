@@ -40,13 +40,30 @@ class CodeExecutorClient:
             return response.output, response.error, response.exit_code
             
         except grpc.RpcError as e:
-            error_msg = f"RPC failed: {str(e)}"
+            error_msg = f"Code execution RPC failed: {e.details()}"
             logger.error(error_msg)
-            return "", error_msg, 1
+            raise Exception(error_msg)
         except Exception as e:
-            error_msg = f"Unexpected error: {str(e)}"
+            error_msg = f"Code execution RPC unexpected error: {str(e)}"
             logger.error(error_msg)
-            return "", error_msg, 1
+            raise Exception(error_msg)
+    
+    def list_tools(self) -> code_executor_pb2.GetToolListResponse:
+        self._get_channel() # make sure the connection is active
+        try:
+            request = code_executor_pb2.GetToolListRequest()
+            return self.stub.GetToolList(request)
+            
+        except grpc.RpcError as e:
+            error_msg = f"Get tool list RPC failed: {e.details()}"
+            logger.error(error_msg)
+            raise Exception(error_msg)
+        except Exception as e:
+            error_msg = f"Get tool list RPC unexpected error: {str(e)}"
+            logger.error(error_msg)
+            raise Exception(error_msg)
+
+
     
     def close(self):
         """Close the gRPC channel."""
