@@ -1,6 +1,5 @@
 from duckduckgo_search import DDGS
 import logging
-import sys
 
 logger = logging.getLogger(__name__)
 
