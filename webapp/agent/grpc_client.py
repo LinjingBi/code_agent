@@ -1,9 +1,9 @@
 import grpc
 from . import code_executor_pb2
 from . import code_executor_pb2_grpc
-import logging
+from utils.logging import setup_logger
 
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__)
 
 class CodeExecutorClient:
     def __init__(self, host: str = 'localhost', port: int = 50051):
@@ -14,20 +14,13 @@ class CodeExecutorClient:
             port: The port where the code executor service is running
         """
         self.address = f'{host}:{port}'
-        self.channel = grpc.insecure_channel(
-            self.address,
-            options=[
-                ('grpc.max_receive_message_length', 100 * 1024 * 1024),  # 100MB
-                ('grpc.max_send_message_length', 100 * 1024 * 1024),     # 100MB
-                ('grpc.keepalive_time_ms', 30000),                       # 30 seconds
-                ('grpc.keepalive_timeout_ms', 10000),                    # 10 seconds
-                ('grpc.keepalive_permit_without_calls', True),
-                ('grpc.http2.max_pings_without_data', 0),
-                ('grpc.http2.min_time_between_pings_ms', 10000),         # 10 seconds
-            ]
-        )
-        self.stub = code_executor_pb2_grpc.CodeExecutorStub(self.channel)
-        logger.info(f"Initialized gRPC client for {self.address}")
+        self._get_channel()
+    
+    def _get_channel(self):
+        if not hasattr(self, 'channel') or self.channel._channel.check_connectivity_state(try_to_connect=True) != grpc.ChannelConnectivity.READY:
+            self.channel = grpc.insecure_channel(self.address)
+            self.stub = code_executor_pb2_grpc.CodeExecutorStub(self.channel)
+            logger.info(f"Initialized gRPC client for {self.address}")
     
     def __call__(self, code: str) -> tuple[str, str, int]:
         """Execute Python code remotely.
@@ -38,6 +31,7 @@ class CodeExecutorClient:
         Returns:
             tuple: (output, error, exit_code)
         """
+        self._get_channel() # make sure the connection is active
         try:
             request = code_executor_pb2.CodeExecutionRequest(
                 code=code

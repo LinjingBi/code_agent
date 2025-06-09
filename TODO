@@ -15,4 +15,5 @@
 06/08
 1. add get tool list gRPC in code executor
 2. get tool list and insert tool list to agent prompt
- 
+06/09
+1. add gRPC reconnect logic to gRPC client 
