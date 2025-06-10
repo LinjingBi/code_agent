@@ -14,6 +14,8 @@
 2. add rule in codeagent prompt to write code without def function, and final_result only contain result not function call.
 06/08
 1. (done)add get tool list gRPC in code executor
-2. get tool list and insert tool list to agent prompt(now all in chat api, need to move to CodeAgent)
+2. (DONE 06/10)get tool list and insert tool list to agent prompt(now all in chat api, need to move to CodeAgent)
 06/09
-1. finalize get tool list client side changes and test
+1. (done 06/10)finalize get tool list client side changes and test
+06/10
+1. consider switching to jupyter for gRPC server for code consistence.
