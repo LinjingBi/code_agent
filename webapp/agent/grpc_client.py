@@ -2,6 +2,7 @@ import grpc
 from . import code_executor_pb2
 from . import code_executor_pb2_grpc
 from utils.logging import setup_logger
+from google.protobuf.empty_pb2 import Empty
 
 logger = setup_logger(__name__)
 
@@ -17,10 +18,10 @@ class CodeExecutorClient:
         self._get_channel()
     
     def _get_channel(self):
-        if not hasattr(self, 'channel') or self.channel._channel.check_connectivity_state(try_to_connect=True) != grpc.ChannelConnectivity.READY:
+        if not hasattr(self, 'channel') or self.channel._channel.check_connectivity_state(try_to_connect=True) > 2: # IDLE(0), CONNECTING(1), READY(2)
             self.channel = grpc.insecure_channel(self.address)
             self.stub = code_executor_pb2_grpc.CodeExecutorStub(self.channel)
-            logger.info(f"Initialized gRPC client for {self.address}")
+            logger.info(f"Initialized gRPC client for {self.address}.")
     
     def __call__(self, code: str) -> tuple[str, str, int]:
         """Execute Python code remotely.
@@ -48,11 +49,12 @@ class CodeExecutorClient:
             logger.error(error_msg)
             raise Exception(error_msg)
     
-    def list_tools(self) -> code_executor_pb2.GetToolListResponse:
+    def list_tools(self):
         self._get_channel() # make sure the connection is active
         try:
-            request = code_executor_pb2.GetToolListRequest()
-            return self.stub.GetToolList(request)
+            tools = self.stub.GetToolList(Empty())
+            logger.info(tools.tools)
+            return tools.tools
             
         except grpc.RpcError as e:
             error_msg = f"Get tool list RPC failed: {e.details()}"

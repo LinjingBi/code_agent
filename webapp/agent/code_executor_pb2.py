@@ -22,19 +22,30 @@ _runtime_version.ValidateProtobufRuntimeVersion(
 _sym_db = _symbol_database.Default()
 
 
+from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x13\x63ode_executor.proto\x12\rcode_executor\"$\n\x14\x43odeExecutionRequest\x12\x0c\n\x04\x63ode\x18\x01 \x01(\t\"I\n\x15\x43odeExecutionResponse\x12\x0e\n\x06output\x18\x01 \x01(\t\x12\r\n\x05\x65rror\x18\x02 \x01(\t\x12\x11\n\texit_code\x18\x03 \x01(\x05\x32j\n\x0c\x43odeExecutor\x12Z\n\x0b\x45xecuteCode\x12#.code_executor.CodeExecutionRequest\x1a$.code_executor.CodeExecutionResponse\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x13\x63ode_executor.proto\x12\rcode_executor\x1a\x1bgoogle/protobuf/empty.proto\"$\n\x14\x43odeExecutionRequest\x12\x0c\n\x04\x63ode\x18\x01 \x01(\t\"I\n\x15\x43odeExecutionResponse\x12\x0e\n\x06output\x18\x01 \x01(\t\x12\r\n\x05\x65rror\x18\x02 \x01(\t\x12\x11\n\texit_code\x18\x03 \x01(\x05\"9\n\x13GetToolListResponse\x12\"\n\x05tools\x18\x01 \x03(\x0b\x32\x13.code_executor.Tool\"\xb8\x01\n\x04Tool\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x13\n\x0boutput_type\x18\x03 \x01(\t\x12/\n\x06inputs\x18\x04 \x03(\x0b\x32\x1f.code_executor.Tool.InputsEntry\x1aG\n\x0bInputsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\'\n\x05value\x18\x02 \x01(\x0b\x32\x18.code_executor.ToolInput:\x02\x38\x01\".\n\tToolInput\x12\x0c\n\x04type\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t2\xb3\x01\n\x0c\x43odeExecutor\x12X\n\x0b\x45xecuteCode\x12#.code_executor.CodeExecutionRequest\x1a$.code_executor.CodeExecutionResponse\x12I\n\x0bGetToolList\x12\x16.google.protobuf.Empty\x1a\".code_executor.GetToolListResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'code_executor_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_CODEEXECUTIONREQUEST']._serialized_start=38
-  _globals['_CODEEXECUTIONREQUEST']._serialized_end=74
-  _globals['_CODEEXECUTIONRESPONSE']._serialized_start=76
-  _globals['_CODEEXECUTIONRESPONSE']._serialized_end=149
-  _globals['_CODEEXECUTOR']._serialized_start=151
-  _globals['_CODEEXECUTOR']._serialized_end=257
+  _globals['_TOOL_INPUTSENTRY']._loaded_options = None
+  _globals['_TOOL_INPUTSENTRY']._serialized_options = b'8\001'
+  _globals['_CODEEXECUTIONREQUEST']._serialized_start=67
+  _globals['_CODEEXECUTIONREQUEST']._serialized_end=103
+  _globals['_CODEEXECUTIONRESPONSE']._serialized_start=105
+  _globals['_CODEEXECUTIONRESPONSE']._serialized_end=178
+  _globals['_GETTOOLLISTRESPONSE']._serialized_start=180
+  _globals['_GETTOOLLISTRESPONSE']._serialized_end=237
+  _globals['_TOOL']._serialized_start=240
+  _globals['_TOOL']._serialized_end=424
+  _globals['_TOOL_INPUTSENTRY']._serialized_start=353
+  _globals['_TOOL_INPUTSENTRY']._serialized_end=424
+  _globals['_TOOLINPUT']._serialized_start=426
+  _globals['_TOOLINPUT']._serialized_end=472
+  _globals['_CODEEXECUTOR']._serialized_start=475
+  _globals['_CODEEXECUTOR']._serialized_end=654
 # @@protoc_insertion_point(module_scope)

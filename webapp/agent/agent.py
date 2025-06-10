@@ -1,12 +1,18 @@
-from typing import List, Dict, Optional
-from pydantic import BaseModel, Field, field_validator
-from llm.openrouter import OpenRouter
-from utils.logging import setup_logger
-from agent.grpc_client import CodeExecutorClient
 import os
 import json
 import ast
 import re
+import yaml
+
+from typing import List, Dict, Optional
+from pydantic import BaseModel, Field, field_validator
+from jinja2 import Environment, FileSystemLoader
+from jinja2 import StrictUndefined
+
+from llm.openrouter import OpenRouter
+from utils.logging import setup_logger
+from agent.grpc_client import CodeExecutorClient
+
 
 # Set up logger
 logger = setup_logger(__name__)
@@ -33,17 +39,63 @@ class CodeAgentResponse(BaseModel):
         return v.strip()
 
 class CodeAgent:
-    def __init__(self, system_prompt, max_iter=5):
-        self.system_prompt = system_prompt
-        self.max_iter = max_iter
+    """
+    system_prompt_yaml: relative path for system prompt yaml file under "utils" dir.
+                        Default is prompt.yaml.
+    """
+
+    def __init__(self, system_prompt_yaml='utils/prompt.txt', max_iter=5):
         assert max_iter > 0, "Assistant needs at least 1 step to give the final answer!"
-        self.messages: List[Dict[str, str]] = []
-        self.llm = OpenRouter(api_key=os.getenv("API_KEY"))
+        self.max_iter = max_iter
+
+        self.system_prompt_yaml = system_prompt_yaml
         self.code_executor = CodeExecutorClient(
             host=os.getenv("CODE_EXECUTOR_HOST", "localhost"),
             port=int(os.getenv("CODE_EXECUTOR_PORT", "50051"))
         )
+        self.system_prompt = self._load_system_prompt()
+        self.messages: List[Dict[str, str]] = []
         self.add_message('system', self.system_prompt)
+
+        self.llm = OpenRouter(api_key=os.getenv("API_KEY"))
+    
+    def _generate_tools_string(self, tools) -> str:
+        """Generate a string representation of the tools for the prompt."""
+        tools_str = []
+        for tool in tools:
+            # Function signature
+            params = [f"{name}: {info.type}" for name, info in tool.inputs.items()]
+            signature = f"def {tool.name}({', '.join(params)}) -> {tool.output_type}"
+            
+            # Docstring
+            docstring = [
+                f'    """\n{tool.description}',
+                '    """'
+            ]
+            
+            # Combine everything
+            tools_str.append(f"{signature}:\n" + "\n".join(docstring))
+        
+        return "\n\n".join(tools_str)
+
+    def _load_system_prompt(self):
+        try:
+            # Read the prompt template
+            with open(self.system_prompt_yaml, 'r') as f:
+                prompt_template = f.read()
+            
+            # Get tools and format them
+            tools = self.code_executor.list_tools()
+            tools_str = self._generate_tools_string(tools)
+            
+            # Format the prompt
+            return prompt_template.format(
+                tools=tools_str,
+                authorized_imports='any import is allowed'  # or your list of authorized imports
+            )
+                
+        except Exception as e:
+            raise Exception(f"Error loading code agent system prompt: {str(e)}")
         
     def add_message(self, role: str, content: str):
         """Add a message to the conversation history."""
@@ -120,7 +172,6 @@ class CodeAgent:
             except Exception as e:
                 error_msg = f"Error processing message: {str(e)}"
                 logger.error(error_msg, exc_info=True)
-                self.add_message("assistant", f"Error: {error_msg}")
                 raise ValueError(error_msg)
         
         # exceed max iter

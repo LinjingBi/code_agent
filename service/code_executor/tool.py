@@ -47,18 +47,9 @@ class Tool:
             param_type = type_hints.get(param_name, Any)
             param_type_name = param_type.__name__ if hasattr(param_type, '__name__') else str(param_type)
             
-            # Get parameter description from docstring
-            param_doc = ""
-            if func.__doc__:
-                doc_lines = func.__doc__.split('\n')
-                for line in doc_lines:
-                    if line.strip().startswith(f":param {param_name}:"):
-                        param_doc = line.split(f":param {param_name}:")[1].strip()
-                        break
             
             inputs[param_name] = {
-                "type": param_type_name,
-                "description": param_doc or f"Parameter {param_name}"
+                "type": param_type_name
             }
         
         # Store tool metadata
@@ -85,17 +76,10 @@ tool_registry = Tool()
 
 @tool_registry
 def search(query: str, max_results: int = 5) -> list:
-    """Search DuckDuckGo for a query.
+    """Search DuckDuckGo for a query and return results.
     
-    Args:
-        query: The search query
-        max_results: Maximum number of results to return (default: 5)
-        
-    Returns:
-        List of search results, each containing:
-        - title: The title of the result
-        - link: The URL of the result
-        - snippet: A brief description of the result
+    :param query: The search query to look up
+    :param max_results: Number of results to return
     """
     ddgs = DDGS()
     results = list(ddgs.text(query, max_results=max_results))

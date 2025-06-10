@@ -1,10 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional
 import uvicorn
 
 from agent.agent import CodeAgent, CodeAgentResponse
-from utils.config import settings
 
 app = FastAPI(
     title="Code Agent API",
@@ -13,7 +11,7 @@ app = FastAPI(
 )
 
 # Initialize the code agent with system prompt from config
-agent = CodeAgent(system_prompt=settings.system_prompt)
+code_agent = CodeAgent()
 
 class ChatRequest(BaseModel):
     message: str
@@ -28,7 +26,7 @@ async def root():
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     try:
-        response = await agent.process_message(
+        response = await code_agent.process_message(
             message=request.message
         )
         return ChatResponse(

@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/empty.proto";
+
 package code_executor;
 
 message CodeExecutionRequest {
@@ -10,9 +12,6 @@ message CodeExecutionResponse {
   string output = 1;
   string error = 2;
   int32 exit_code = 3;
-}
-
-message GetToolListRequest {
 }
 
 message GetToolListResponse {
@@ -33,5 +32,5 @@ message ToolInput {
 
 service CodeExecutor {
   rpc ExecuteCode(CodeExecutionRequest) returns (CodeExecutionResponse);
-  rpc GetToolList(GetToolListRequest) returns (GetToolListResponse);
+  rpc GetToolList(google.protobuf.Empty) returns (GetToolListResponse);
 }

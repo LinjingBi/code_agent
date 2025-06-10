@@ -110,6 +110,22 @@ Response:
 
 ## Development
 
+### 1. Start gRPC container
+```
+cd service/code_executor
+./restart.sh // make sure docker daemon is running first
+```
+### 2. Start webapp
+```
+cd webapp
+(optional if gRPC proto changed) python -m grpc_tools.protoc -I../service/code_executor/proto\
+    --python_out=./agent \
+    --grpc_python_out=./agent \
+    ../service/code_executor/proto/code_executor.proto
+
+python main.py
+```
+
 ### Project Structure
 ```
 <project_root>/

@@ -1,14 +1,19 @@
-import grpc
 from concurrent import futures
 import io
 import contextlib
 from typing import Dict, Any
 import logging
+
+import grpc
+from google.protobuf.empty_pb2 import Empty
+
 from tool import tool_registry
 
-# Import generated gRPC code
 import code_executor_pb2
 import code_executor_pb2_grpc
+
+# tool imports
+from tool import search
 
 logging.basicConfig(
     level=logging.INFO,
@@ -21,7 +26,8 @@ def final_answer(answer):
     print(f"<SYSTEM>Final answer is {answer}<SYSTEM>")
 
 class CodeExecutorServicer(code_executor_pb2_grpc.CodeExecutorServicer):
-    def GetToolList(self, context) -> list(code_executor_pb2.GetToolListResponse):
+    def GetToolList(self, request, context) -> code_executor_pb2.GetToolListResponse:
+        logger.info(f"Received get code execution tools request")
         try:
             # Get tools from registry (returns Python dict)
             tools_dict = tool_registry.get_tools()
@@ -70,21 +76,27 @@ class CodeExecutorServicer(code_executor_pb2_grpc.CodeExecutorServicer):
                 namespace: Dict[str, Any] = {
                     "__builtins__": __builtins__,
                     "final_answer": final_answer,
-                    
                 }
+                tool_namespace = {"search": search}
+                namespace.update(tool_namespace)
                 
                 # Execute the code
-                exec(request.code, namespace)
-            
-            # Get captured output
-            output = stdout.getvalue()
-            error = stderr.getvalue()
-            
-            return code_executor_pb2.CodeExecutionResponse(
-                output=output,
-                error=error,
-                exit_code=0
-            )
+                try:
+                    exec(request.code, namespace)
+                    output = stdout.getvalue()
+                    error = stderr.getvalue()
+                    return code_executor_pb2.CodeExecutionResponse(
+                        output=output,
+                        error=error,
+                        exit_code=0
+                    )
+                except Exception as e:
+                    error = f"{type(e).__name__}: {str(e)}"
+                    return code_executor_pb2.CodeExecutionResponse(
+                        output="",
+                        error=error,
+                        exit_code=1
+                    )
             
         except Exception as e:
             logger.error(f"Error executing code: {str(e)}")
