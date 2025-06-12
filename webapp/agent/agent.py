@@ -6,8 +6,6 @@ import yaml
 
 from typing import List, Dict, Optional
 from pydantic import BaseModel, Field, field_validator
-from jinja2 import Environment, FileSystemLoader
-from jinja2 import StrictUndefined
 
 from llm.openrouter import OpenRouter
 from utils.logging import setup_logger

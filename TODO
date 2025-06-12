@@ -19,3 +19,4 @@
 1. (done 06/10)finalize get tool list client side changes and test
 06/10
 1. consider switching to jupyter for gRPC server for code consistence.
+2. add step to summary all the message history before response user.
