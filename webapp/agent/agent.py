@@ -53,7 +53,7 @@ class CodeAgent:
         )
         self.system_prompt = self._load_system_prompt()
         self.messages: List[Dict[str, str]] = []
-        self.add_message('system', self.system_prompt)
+
 
         self.llm = OpenRouter(api_key=os.getenv("API_KEY"))
     
@@ -98,6 +98,7 @@ class CodeAgent:
     def add_message(self, role: str, content: str):
         """Add a message to the conversation history."""
         self.messages.append({"role": role, "content": content})
+
         print(f"{role.upper()}:")
         if "Thought:" in content and "Code:" in content:
             thought, code = content.split("Code:", 1)
@@ -116,7 +117,18 @@ class CodeAgent:
         else:
             print(content)
     
-    async def process_message(self, message: str) -> CodeAgentResponse:
+    async def answer_question(self, question: str) -> List[Dict[str, str]]:
+        # Add user message to history
+        self.add_message('system', self.system_prompt)
+        self.add_message("user", question)
+        logger.info("User message added to history")
+        await self._process_message(question)
+        messages = self.messages.copy()
+        self.messages = []
+        return messages
+
+    
+    async def _process_message(self, message: str) -> CodeAgentResponse:
         """Process a user message and return the agent's response.
         
         Args:
@@ -128,9 +140,7 @@ class CodeAgent:
         Raises:
             ValueError: If the response format is invalid
         """
-        # Add user message to history
-        self.add_message("user", message)
-        logger.info("User message added to history")
+
 
         for _ in range(self.max_iter):
             try:
