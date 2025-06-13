@@ -18,5 +18,9 @@
 06/09
 1. (done 06/10)finalize get tool list client side changes and test
 06/10
-1. consider switching to jupyter for gRPC server for code consistence.
+1. (done 06/11)consider switching to jupyter for gRPC server for code consistence.
 2. add step to summary all the message history before response user.
+06/13
+1. thoughout test for jupyter code agent
+2. add a manager agent to summary code agent's work and reply back to chat APIs
+3. create a base class for code agent and jupyter agent

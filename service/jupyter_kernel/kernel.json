@@ -1,0 +1,13 @@
+{
+    "argv": [
+        "python",
+        "-m",
+        "ipykernel_launcher",
+        "-f",
+        "{connection_file}",
+        "--init-script",
+        "/home/jupyter/kernel_init.py"
+    ],
+    "display_name": "Python 3 (with tools)",
+    "language": "python"
+} 

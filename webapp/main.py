@@ -1,9 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
 import uvicorn
 from typing import List, Dict
 
 from agent.agent import CodeAgent, CodeAgentResponse
+from agent.jupyter_agent import JupyterCodeAgent
+from agent.jupyter_kernel import get_kernel, JupyterKernelManager
 
 app = FastAPI(
     title="Code Agent API",
@@ -11,8 +13,9 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Initialize the code agent with system prompt from config
+# Initialize the code agents
 code_agent = CodeAgent()
+jupyter_agent = JupyterCodeAgent()
 
 class ChatRequest(BaseModel):
     message: str
@@ -31,6 +34,22 @@ async def chat(request: ChatRequest):
         # TODO - return summarized message, not derive progress from code agent
         response = await code_agent.answer_question(
             message=request.message
+        )
+        return ChatResponse(
+            response=response,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/chat-jupyter", response_model=ChatResponse)
+async def chat_jupyter(
+    request: ChatRequest,
+    kernel_manager: JupyterKernelManager = Depends(get_kernel)
+):
+    try:
+        response = await jupyter_agent.answer_question(
+            message=request.message,
+            kernel_manager=kernel_manager
         )
         return ChatResponse(
             response=response,
