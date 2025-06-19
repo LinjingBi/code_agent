@@ -174,7 +174,7 @@ class CodeAgent:
                     agent_response.observation = output
                     self.add_message("system", f"Observation: {agent_response.observation}")
 
-                if error or final_answer:
+                if final_answer:
                     return agent_response
                 
             except Exception as e:

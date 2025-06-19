@@ -26,14 +26,19 @@ class JupyterCodeAgent:
         self.llm = OpenRouter(api_key=os.getenv("API_KEY"))
         self.system_prompt = None  # Will be set after getting tools
 
-    async def initialize(self, kernel_manager: JupyterKernelManager):
+    def initialize(self, kernel_manager: JupyterKernelManager):
         """Initialize the agent by getting tools from the kernel."""
         # Get tools by executing code in the kernel
         init_code = """
+# Import and set up tools manually
+import sys
+import os
+sys.path.append('/home/jupyter')
+
 from tools import tool_registry
 print(tool_registry.get_tools())
 """
-        result = await kernel_manager.execute_code(init_code)
+        result = kernel_manager.execute_code(init_code)
         if result["error"]:
             raise Exception(f"Failed to get tools: {result['error']}")
         
@@ -84,10 +89,10 @@ print(tool_registry.get_tools())
         self.messages.append({"role": role, "content": content})
         logger.info(f"Added {role} message to history")
 
-    async def answer_question(self, message: str, kernel_manager: JupyterKernelManager) -> List[Dict[str, str]]:
+    def answer_question(self, message: str, kernel_manager: JupyterKernelManager) -> List[Dict[str, str]]:
         """Process a user message and return the agent's response."""
         if not self.system_prompt:
-            await self.initialize(kernel_manager)
+            self.initialize(kernel_manager)
 
         self.add_message('system', self.system_prompt)
         self.add_message("user", message)
@@ -95,7 +100,7 @@ print(tool_registry.get_tools())
         for _ in range(self.max_iter):
             try:
                 # Get completion from OpenRouter
-                response = await self.llm.chat_completion(
+                response = self.llm.chat_completion_sync(
                     messages=self.messages,
                     model="deepseek/deepseek-r1-0528-qwen3-8b:free",
                     temperature=0.7,
@@ -106,7 +111,7 @@ print(tool_registry.get_tools())
                 self.add_message("assistant", f"Thought: {agent_response.thought}\nCode: {agent_response.code}")
 
                 # Execute code using Jupyter kernel
-                result = await kernel_manager.execute_code(agent_response.code)
+                result = kernel_manager.execute_code(agent_response.code)
                 
                 if result["error"]:
                     agent_response.observation = f"Error: {result['error']}"
@@ -151,7 +156,3 @@ print(tool_registry.get_tools())
             code = response[code_start + 5:].strip()
             
             return JupyterCodeAgentResponse(thought=thought, code=code)
-
-    async def close(self):
-        """Close the LLM client."""
-        await self.llm.close() 

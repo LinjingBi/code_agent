@@ -14,7 +14,7 @@ app = FastAPI(
 )
 
 # Initialize the code agents
-code_agent = CodeAgent()
+# code_agent = CodeAgent()
 jupyter_agent = JupyterCodeAgent()
 
 class ChatRequest(BaseModel):
@@ -28,18 +28,18 @@ class ChatResponse(BaseModel):
 async def root():
     return {"message": "Code Agent API is running"}
 
-@app.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
-    try:
-        # TODO - return summarized message, not derive progress from code agent
-        response = await code_agent.answer_question(
-            message=request.message
-        )
-        return ChatResponse(
-            response=response,
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# @app.post("/chat", response_model=ChatResponse)
+# async def chat(request: ChatRequest):
+#     try:
+#         # TODO - return summarized message, not derive progress from code agent
+#         response = await code_agent.answer_question(
+#             message=request.message
+#         )
+#         return ChatResponse(
+#             response=response,
+#         )
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/chat-jupyter", response_model=ChatResponse)
 async def chat_jupyter(
@@ -47,7 +47,7 @@ async def chat_jupyter(
     kernel_manager: JupyterKernelManager = Depends(get_kernel)
 ):
     try:
-        response = await jupyter_agent.answer_question(
+        response = jupyter_agent.answer_question(
             message=request.message,
             kernel_manager=kernel_manager
         )
