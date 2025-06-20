@@ -4,6 +4,7 @@ import uvicorn
 from typing import List, Dict
 
 from agent.agent import CodeAgent, CodeAgentResponse
+from agent.manager import ManagerAgent
 from agent.jupyter_agent import JupyterCodeAgent
 from agent.jupyter_kernel import get_kernel, JupyterKernelManager
 
@@ -14,48 +15,51 @@ app = FastAPI(
 )
 
 # Initialize the code agents
-# code_agent = CodeAgent()
-jupyter_agent = JupyterCodeAgent()
+code_agent = CodeAgent()
+manager_agent = ManagerAgent()
+# jupyter_agent = JupyterCodeAgent()
 
 class ChatRequest(BaseModel):
     message: str
 
-# TODO - return summarized message, not derive progress from code agent
 class ChatResponse(BaseModel):
-    response: List
+    response: str
 
 @app.get("/")
 async def root():
     return {"message": "Code Agent API is running"}
 
-# @app.post("/chat", response_model=ChatResponse)
-# async def chat(request: ChatRequest):
+@app.post("/chat", response_model=ChatResponse)
+async def chat(request: ChatRequest):
+    try:
+        # TODO - return summarized message, not derive progress from code agent
+        code_response = await code_agent.answer_question(
+            question=request.message
+        )
+        mgr_resp = await manager_agent.summary(
+            code_response
+        )
+        return ChatResponse(
+            response=mgr_resp,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# @app.post("/chat-jupyter", response_model=ChatResponse)
+# async def chat_jupyter(
+#     request: ChatRequest,
+#     kernel_manager: JupyterKernelManager = Depends(get_kernel)
+# ):
 #     try:
-#         # TODO - return summarized message, not derive progress from code agent
-#         response = await code_agent.answer_question(
-#             message=request.message
+#         response = jupyter_agent.answer_question(
+#             message=request.message,
+#             kernel_manager=kernel_manager
 #         )
 #         return ChatResponse(
 #             response=response,
 #         )
 #     except Exception as e:
 #         raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/chat-jupyter", response_model=ChatResponse)
-async def chat_jupyter(
-    request: ChatRequest,
-    kernel_manager: JupyterKernelManager = Depends(get_kernel)
-):
-    try:
-        response = jupyter_agent.answer_question(
-            message=request.message,
-            kernel_manager=kernel_manager
-        )
-        return ChatResponse(
-            response=response,
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

@@ -2,7 +2,6 @@ import os
 import json
 import ast
 import re
-import yaml
 
 from typing import List, Dict, Optional
 from pydantic import BaseModel, Field, field_validator
@@ -122,13 +121,13 @@ class CodeAgent:
         self.add_message('system', self.system_prompt)
         self.add_message("user", question)
         logger.info("User message added to history")
-        await self._process_message(question)
+        await self._process_message()
         messages = self.messages.copy()
         self.messages = []
         return messages
 
     
-    async def _process_message(self, message: str) -> CodeAgentResponse:
+    async def _process_message(self) -> List[Dict[str, str]]:
         """Process a user message and return the agent's response.
         
         Args:
@@ -166,16 +165,18 @@ class CodeAgent:
 
                 if error:
                     agent_response.observation = f"Error: {error}. Exit code: {exit_code}"
-                    self.add_message("system", f"Observation: {agent_response.observation}")
+                    # self.add_message("system", f"Observation: {agent_response.observation}")
+                    self.add_message("system", f"{agent_response.observation}")
                 elif final_answer:
                     agent_response.final_answer = final_answer
                     self.add_message("system", f"Final Answer: {agent_response.final_answer}")
                 else:
                     agent_response.observation = output
-                    self.add_message("system", f"Observation: {agent_response.observation}")
+                    # self.add_message("system", f"Observation: {agent_response.observation}")
+                    self.add_message("system", f"{agent_response.observation}")
 
                 if final_answer:
-                    return agent_response
+                    return self.return_complete_solution()
                 
             except Exception as e:
                 error_msg = f"Error processing message: {str(e)}"
@@ -185,6 +186,10 @@ class CodeAgent:
         # exceed max iter
         logger.warning(f'Failed to give final answer within {self.max_iter} steps.\nLast response: {self.messages[-2:]}')
         return agent_response
+
+    def return_complete_solution(self) -> List[Dict[str, str]]:
+        """Return only the solution part from code agent, expcet the first two items in messages(question and system prompt)"""
+        return self.messages[2:]
     
     async def close(self):
         """Close the LLM client and code executor."""

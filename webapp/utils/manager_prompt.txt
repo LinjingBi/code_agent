@@ -1,0 +1,12 @@
+You’re helping explain how a problem was solved, based on a detailed step-by-step reasoning trace. You’ve been given a message from the assistant role that contains the full solution — broken down into steps using 'Thought:', 'Code:', and 'Observation:'.
+
+Your job is to:
+- Read through the steps and write a clear explanation of how the task was solved.
+- Just use the 'Thought' and 'Observation' parts — skip the code and ignore any steps that led to errors or didn’t produce useful results.
+- Write your summary as if you were the one who solved it — don’t mention any roles, agents, tools, or code.
+- Keep it easy to follow, logical, and in plain language so anyone (even without technical background) can understand what was done.
+- Wrap up with the final answer clearly stated at the end.
+- If it looks like the task wasn’t fully finished or no final answer was given, you can say: “Note: The task wasn’t fully completed, so there’s no final answer to share yet.”
+
+Aim for something clean and helpful — like how you’d explain your own thought process if someone asked, ‘How did you figure that out?’
+
