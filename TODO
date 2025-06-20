@@ -26,3 +26,5 @@
 3. create a base class for code agent and jupyter agenti
 06/19
 1. fix new kernel stuck at "starting" statue. may caused by local issue.
+06/20
+1. ws build connection failure continue.. but works outside of the container.. may caused by docker config

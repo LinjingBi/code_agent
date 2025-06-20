@@ -24,36 +24,6 @@ class JupyterKernelManager:
             self.ws_url = f"ws://{self.kernel_gateway_host}/api/kernels/{self.kernel_id}/channels"
             logger.info(f"Created new kernel with ID: {self.kernel_id}")
             
-            # Wait for kernel to be ready (idle state)
-            status_url = f"http://{self.kernel_gateway_host}/api/kernels/{self.kernel_id}"
-            max_wait = 30  # Maximum wait time in seconds
-            wait_time = 0
-            
-            while wait_time < max_wait:
-                try:
-                    status_response = client.get(status_url)
-                    status_response.raise_for_status()
-                    kernel_status = status_response.json()
-                    logger.info(kernel_status)
-                    execution_state = kernel_status.get('execution_state', 'unknown')
-                    logger.info(f"Kernel status: {execution_state}")
-                    
-                    if execution_state == 'idle':
-                        logger.info("Kernel is ready!")
-                        break
-                    elif execution_state == 'dead':
-                        raise Exception("Kernel failed to start")
-                    
-                    time.sleep(3)
-                    wait_time += 1
-                except Exception as e:
-                    logger.warning(f"Could not check kernel status: {e}")
-                    time.sleep(1)
-                    wait_time += 1
-            
-            if wait_time >= max_wait:
-                raise Exception("Kernel did not become ready within timeout")
-            
             return self.kernel_id
 
     def execute_code(self, code: str) -> Dict:
@@ -75,6 +45,8 @@ class JupyterKernelManager:
                     "msg_type": "execute_request",
                     "msg_id": "1"
                 },
+                "parent_header": {},
+                "metadata": {},
                 "content": {
                     "code": code,
                     "silent": False,

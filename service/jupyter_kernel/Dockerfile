@@ -16,15 +16,21 @@ RUN pip install --no-cache-dir \
 # Create a non-root user
 # RUN useradd -m -s /bin/bash jupyter
 # USER jupyter
-# WORKDIR /home/jupyter
+WORKDIR /home/jupyter
 
 # Copy tools and kernel initialization
-COPY --chown=jupyter:jupyter tools.py /home/jupyter/
-COPY --chown=jupyter:jupyter kernel_init.py /home/jupyter/
+# COPY --chown=jupyter:jupyter tools.py /home/jupyter/
+# COPY --chown=jupyter:jupyter kernel_init.py /home/jupyter/
+
+COPY tools.py /home/jupyter/
+COPY kernel_init.py /home/jupyter/
 
 # Create kernel configuration
-# RUN mkdir -p /home/jupyter/.jupyter/kernels/python3
+RUN mkdir -p /home/jupyter/.jupyter/kernels/python3
 # COPY --chown=jupyter:jupyter kernel.json /home/jupyter/.jupyter/kernels/python3/
+ENV JUPYTER_PATH=/home/jupyter/.jupyter
+COPY kernel.json /home/jupyter/.jupyter/kernels/python3/
+
 
 # Expose the Jupyter Kernel Gateway port
 EXPOSE 8888
