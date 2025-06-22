@@ -235,3 +235,6 @@ python main.py
    - Add deployment guides
    - Add troubleshooting guides
    - Add development guides
+  
+## Hignly inpired by the Code agent from hugging face
+https://huggingface.co/docs/smolagents/index 
